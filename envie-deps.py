@@ -33,7 +33,7 @@ class RemoteRepo(object):
     gopath = os.getenv("GOPATH")
     self.cmd("cd %s && mkdir -p %s" % (gopath, path))
     self.cmd("cd %s && %s" % (path, self.downloader(org, pkg)))
-    self.cmd("cd %s && %s" % (path, self.versioner(ver)))
+    self.cmd("cd %s/%s && %s" % (path, pkg, self.versioner(ver)))
 
 
 class GitRepo(RemoteRepo):
