@@ -3,6 +3,6 @@ repo github.com
     ver v0.1
     pkg test-repo-1
     pkg test-repo-2
-    ver v1.0-rc1
+    ver v2.0
     pkg test-repo-3
 
