@@ -18,7 +18,7 @@ func TestMustAdd(t *testing.T) {
 	for sum, addends := range exercises {
 		s := Sum(addends.a, addends.b)
 		if sum != s {
-			t.Failf("Expected %d + %d = %d, got %d", addends.a, addends.b, sum, s)
+			t.Errorf("Expected %d + %d = %d, got %d", addends.a, addends.b, sum, s)
 		}
 	}
 }
