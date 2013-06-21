@@ -12,6 +12,8 @@ PKGNAME=envie
 # so we always know where we are.
 CWD=$(dirname $0)
 CWD=$(cd $CWD; pwd)
+echo $0
+exit
 
 # Establish Go project environment.
 export GOPATH=$(pwd)
@@ -28,5 +30,5 @@ echo "propegate to your interactive shell session.  You'll want to"
 echo "execute the following command if you haven't set the GOPATH"
 echo "variable already:"
 echo ""
-echo "export GOPATH=$(pwd)"
+echo "export GOPATH=$GOPATH"
 

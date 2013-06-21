@@ -92,6 +92,8 @@ class DependenciesStateMachine(object):
     except IOError:
       # If not found, not a problem; it just means the dep is a leaf.
       pass
+    finally:
+      self.setVersion(self.repo.defaultVersion())
 
   def dependencies(self):
     return self.deps
