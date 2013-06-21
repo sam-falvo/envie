@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import urllib2
 
 
@@ -31,8 +32,8 @@ class RemoteRepo(object):
       path = "src/%s/%s" % (self.host_name, org)
     gopath = os.getenv("GOPATH")
     self.cmd("cd %s && mkdir -p %s" % (gopath, path))
-    self.cmd("cd %s && %s" % (gopath, self.downloader(org, pkg)))
-    self.cmd("cd %s && %s" % (gopath, self.versioner(ver))
+    self.cmd("cd %s && %s" % (path, self.downloader(org, pkg)))
+    self.cmd("cd %s && %s" % (path, self.versioner(ver)))
 
 
 class GitRepo(RemoteRepo):
@@ -146,6 +147,11 @@ class InstallStateMachine(object):
       self.setPath(param)
 
 def main():
+  # We absolutely must have GOPATH set for this code to work.  Sorry.
+  if not os.getenv("GOPATH"):
+    sys.stderr.write("You need to have GOPATH set before running this code.\n")
+    sys.exit(1)
+
   # First, we process our immediate dependencies to build the complete set of deps.
 
   s = DependenciesStateMachine()
