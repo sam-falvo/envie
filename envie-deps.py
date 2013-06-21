@@ -13,15 +13,16 @@ def curl(url):
   return content
 
 class RemoteRepo(object):
-  def __init__(self, dv, hn):
+  def __init__(self, dv, hn, rn):
     self.default_version = dv
     self.host_name = hn
+    self.raw_host_name = rn
 
   def defaultVersion(self):
     return self.default_version
 
-  def pkgFileUrl(self, org, pkg, fname):
-    return "https://%s/%s/%s/%s" % (self.host_name, org, pkg, fname)
+  def rawFileUrl(self, org, pkg, version, fname):
+    return "https://%s/%s/%s/%s/%s" % (self.raw_host_name, org, pkg, version, fname)
 
   def cmd(self, c):
     print(c)
@@ -57,9 +58,9 @@ class HgRepo(RemoteRepo):
     return "hg checkout %s" % (ver)
 
 _REPOS = {
-  "github.com": GitRepo("master", "github.com"),
-  "bitbucket.org": HgRepo("trunk", "bitbucket.org"),
-  "intranet.example.com": GitRepo("master", "intranet.example.com"),
+  "github.com": GitRepo("master", "github.com", "raw.github.com"),
+  "bitbucket.org": HgRepo("trunk", "bitbucket.org", "bitbucket.org"),
+  "intranet.example.com": GitRepo("master", "intranet.example.com", "raw.example.com"),
 }
 
 class DependenciesStateMachine(object):
@@ -84,7 +85,7 @@ class DependenciesStateMachine(object):
     self.path = p
 
   def installPackage(self, p):
-    url = self.repo.pkgFileUrl(self.org, p, "dependencies.envie")
+    url = self.repo.rawFileUrl(self.org, p, self.version, "dependencies.envie")
     print(">> GET %s" % url)
     try:
       self.deps = "%s\n%s" % (self.deps, str(curl(url)))
@@ -168,6 +169,10 @@ def main():
 
   # We have all the deps for our deps, but not the deps we depend on locally.
   # Add those here.
+
+  os.system("echo '*****'")
+  os.system("cat dependencies.envie")
+  os.system("echo '*****'")
 
   file("dependencies.envie", "a").write(file("dependencies.local", "r").read())
 
