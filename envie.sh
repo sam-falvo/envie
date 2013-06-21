@@ -18,6 +18,10 @@ export GOPATH=$(pwd)
 mkdir -p src/$PKGBASE
 ln -s $(pwd) src/$PKGBASE/$PKGNAME
 
+# Follow and install dependencies.
+# I think this will need to be a simple python script or something.
+python envie-deps.py
+
 # Remind user to set GOPATH.
 echo "Reminder -- environment variables set in this program do not"
 echo "propegate to your interactive shell session.  You'll want to"

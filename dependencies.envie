@@ -1,0 +1,13 @@
+repo github.com
+org sam-falvo
+ver v1.0.4
+pkg P1
+ver v0.10.5-rc4
+pkg P2
+pkg p4
+pkg p5
+
+repo bitbucket.org
+org kc5tja
+pkg P3
+
