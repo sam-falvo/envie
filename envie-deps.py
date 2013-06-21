@@ -92,7 +92,7 @@ class StateMachine(object):
 def main():
   s = StateMachine()
   try:
-    with file("dependencies.envie") as depsFile:
+    with file("dependencies.local") as depsFile:
       for line in depsFile:
         line = line.strip()
         if len(line):
