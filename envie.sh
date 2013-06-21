@@ -12,8 +12,6 @@ PKGNAME=envie
 # so we always know where we are.
 CWD=$(dirname $0)
 CWD=$(cd $CWD; pwd)
-echo $0
-exit
 
 # Establish Go project environment.
 export GOPATH=$(pwd)
