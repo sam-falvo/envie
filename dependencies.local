@@ -1,23 +1,6 @@
 repo github.com
   org sam-falvo
-  ver v1.0.4
-  pkg P1
-  ver v0.10.5-rc4
-  pkg P2
-  pkg p4
-  pkg p5
-  org rackspace
-  ver v0.0.1
-  dir src/github.com/racker
-  pkg gorax
-
-repo bitbucket.org
-  org kc5tja
-  pkg P3
-
-repo intranet.example.com
-  org rackspace
-  dir src/github.com/sam-falvo
-  ver 1.2-rc3
-  pkg foobar
+    pkg test-repo-1
+    pkg test-repo-2
+    pkg test-repo-3
 

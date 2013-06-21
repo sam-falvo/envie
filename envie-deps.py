@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+import os
+import urllib2
+
+
+
+def curl(url):
+  u = urllib2.urlopen(url)
+  content = u.read()
+  u.close()
+  return content
+
 class RemoteRepo(object):
   def __init__(self, dv, hn):
     self.default_version = dv
@@ -8,22 +19,20 @@ class RemoteRepo(object):
   def defaultVersion(self):
     return self.default_version
 
+  def pkgFileUrl(self, org, pkg, fname):
+    return "https://%s/%s/%s/%s" % (self.host_name, org, pkg, fname)
+
+  def cmd(self, c):
+    print(c)
+    os.system(c)
+
   def installVersion(self, org, pkg, ver, path=None):
     if not path:
       path = "src/%s/%s" % (self.host_name, org)
-
-    cmds = """cd $GOPATH
-mkdir -p %s
-cd %s
-%s
-%s
-""" % (
-  path,
-  path,
-  self.downloader(org, pkg),
-  self.versioner(ver)
-)
-    print cmds
+    gopath = os.getenv("GOPATH")
+    self.cmd("cd %s && mkdir -p %s" % (gopath, path))
+    self.cmd("cd %s && %s" % (gopath, self.downloader(org, pkg)))
+    self.cmd("cd %s && %s" % (gopath, self.versioner(ver))
 
 
 class GitRepo(RemoteRepo):
@@ -52,7 +61,53 @@ _REPOS = {
   "intranet.example.com": GitRepo("master", "intranet.example.com"),
 }
 
-class StateMachine(object):
+class DependenciesStateMachine(object):
+  def __init__(self):
+    self.setRepo("github.com")
+    self.deps = ""
+
+  def setRepo(self, r):
+    self.repo = _REPOS[r]
+    self.org = None
+    self.version = self.repo.defaultVersion()
+    self.path = None
+
+  def setOrg(self, o):
+    self.org = o
+    self.path = None
+
+  def setVersion(self, v):
+    self.version = v
+
+  def setPath(self, p):
+    self.path = p
+
+  def installPackage(self, p):
+    url = self.repo.pkgFileUrl(self.org, p, "dependencies.envie")
+    print(">> GET %s" % url)
+    try:
+      self.deps = "%s\n%s" % (self.deps, str(curl(url)))
+    except IOError:
+      # If not found, not a problem; it just means the dep is a leaf.
+      pass
+
+  def dependencies(self):
+    return self.deps
+
+  def interpret(self, cmd, param):
+    # Ignore errors for now.
+    if cmd == "repo":
+      self.setRepo(param)
+    elif cmd == "org":
+      self.setOrg(param)
+    elif cmd == "ver":
+      self.setVersion(param)
+    elif cmd == "pkg":
+      self.installPackage(param)
+    elif cmd == "dir":
+      self.setPath(param)
+
+class InstallStateMachine(object):
   def __init__(self):
     self.setRepo("github.com")
 
@@ -78,6 +133,7 @@ class StateMachine(object):
 
   def interpret(self, cmd, param):
     # Ignore errors for now.
+    # This means a "command" of # is a comment by convenience.
     if cmd == "repo":
       self.setRepo(param)
     elif cmd == "org":
@@ -90,7 +146,9 @@ class StateMachine(object):
       self.setPath(param)
 
 def main():
-  s = StateMachine()
+  # First, we process our immediate dependencies to build the complete set of deps.
+
+  s = DependenciesStateMachine()
   try:
     with file("dependencies.local") as depsFile:
       for line in depsFile:
@@ -98,9 +156,24 @@ def main():
         if len(line):
           (cmd, param) = line.split()
           s.interpret(cmd, param)
+    file("dependencies.envie", "w").write(s.dependencies())
   except IOError:
-    # Envie allows for an optional dependencies file.  If it's missing, that's OK.
     pass
+
+  # We have all the deps for our deps, but not the deps we depend on locally.
+  # Add those here.
+
+  file("dependencies.envie", "a").write(file("dependencies.local", "r").read())
+
+  # Now install all the deps, if they're not already present.
+
+  s = InstallStateMachine()
+  with file("dependencies.envie") as depsFile:
+    for line in depsFile:
+      line = line.strip()
+      if len(line):
+        (cmd, param) = line.split()
+        s.interpret(cmd, param)
 
 if __name__ == '__main__':
   main()
