@@ -11,7 +11,7 @@ type pair struct {
 func TestMustAdd(t *testing.T) {
 	exercises := map[int]pair{
 		10: pair{5, 5},
-		10: pair{6, 4},
+		11: pair{3, 8},
 		12: pair{10, 2},
 	}
 
