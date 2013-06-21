@@ -1,45 +1,55 @@
 #!/usr/bin/env python
 
-class GitHubRepo(object):
-  def defaultVersion(self):
-    return "master"
+class RemoteRepo(object):
+  def __init__(self, dv, hn):
+    self.default_version = dv
+    self.host_name = hn
 
-  def installVersion(self, org, pkg, ver):
+  def defaultVersion(self):
+    return self.default_version
+
+  def installVersion(self, org, pkg, ver, path=None):
+    if not path:
+      path = "src/%s/%s" % (self.host_name, org)
+
     cmds = """cd $GOPATH
-mkdir -p src/github.com/%s
-cd src/github.com/%s
-git clone git@github.com:%s/%s
-git checkout %s
+mkdir -p %s
+cd %s
+%s
+%s
 """ % (
-  org,
-  org,
-  org, pkg,
-  ver
+  path,
+  path,
+  self.downloader(org, pkg),
+  self.versioner(ver)
 )
     print cmds
 
-class BitBucketRepo(object):
-  def defaultVersion(self):
-    return "trunk"
 
-  def installVersion(self, org, pkg, ver):
-    cmds = """cd $GOPATH
-mkdir -p src/bitbucket.org/%s
-cd src/bitbucket.org/%s
-hg clone https://bitbucket.org/%s/%s
-hg checkout %s
-""" % (
-  org,
-  org,
-  org, pkg,
-  ver
-)
-    print cmds
+class GitRepo(RemoteRepo):
+  def __init__(self, *args, **kwArgs):
+    super(GitRepo, self).__init__(*args, **kwArgs)
 
+  def downloader(self, org, pkg):
+    return "git clone git@%s:%s/%s" % (self.host_name, org, pkg)
+
+  def versioner(self, ver):
+    return "git checkout %s" % (ver)
+
+class HgRepo(RemoteRepo):
+  def __init__(self, *args, **kwArgs):
+    super(HgRepo, self).__init__(*args, **kwArgs)
+
+  def downloader(self, org, pkg):
+    return "hg clone https://%s/%s/%s" % (self.host_name, org, pkg)
+
+  def versioner(self, ver):
+    return "hg checkout %s" % (ver)
 
 _REPOS = {
-  "github.com": GitHubRepo(),
-  "bitbucket.org": BitBucketRepo(),
+  "github.com": GitRepo("master", "github.com"),
+  "bitbucket.org": HgRepo("trunk", "bitbucket.org"),
+  "intranet.example.com": GitRepo("master", "intranet.example.com"),
 }
 
 class StateMachine(object):
@@ -50,15 +60,20 @@ class StateMachine(object):
     self.repo = _REPOS[r]
     self.org = None
     self.version = self.repo.defaultVersion()
+    self.path = None
 
   def setOrg(self, o):
     self.org = o
+    self.path = None
 
   def setVersion(self, v):
     self.version = v
 
+  def setPath(self, p):
+    self.path = p
+
   def installPackage(self, p):
-    self.repo.installVersion(self.org, p, self.version)
+    self.repo.installVersion(self.org, p, self.version, self.path)
     self.version = self.repo.defaultVersion()
 
   def interpret(self, cmd, param):
@@ -71,6 +86,8 @@ class StateMachine(object):
       self.setVersion(param)
     elif cmd == "pkg":
       self.installPackage(param)
+    elif cmd == "dir":
+      self.setPath(param)
 
 def main():
   s = StateMachine()
